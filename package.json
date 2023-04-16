@@ -1,0 +1,22 @@
+{
+  "name": "penguinspritebuilder",
+  "version": "1.0.0",
+  "description": "Create penguin sprite animations",
+  "main": "penguinbuilder.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sahmyooI/penguinspritebuilder.git"
+  },
+  "author": "sahmyool",
+  "license": "CC0-1.0",
+  "bugs": {
+    "url": "https://github.com/sahmyooI/penguinspritebuilder/issues"
+  },
+  "homepage": "https://github.com/sahmyooI/penguinspritebuilder#readme",
+  "dependencies": {
+    "gifencoder": "^2.0.1",
+    "png-file-stream": "^1.2.1",
+    "sharp": "^0.32.0"
+  },
+  "type": "module"
+}
