@@ -53,8 +53,7 @@ async function buildAnimation(options) {
     let cacheString = penguinArray.join("_");
 
     if (fs.existsSync(`${outputDir}/${cacheString}`)) {
-        return cacheString
-        return;
+        return cacheString;
     }
 
     fs.mkdirSync(`${outputDir}/${cacheString}`);
@@ -266,7 +265,7 @@ async function tint(image, color) {
 
     const pixelArray = new Uint8ClampedArray(data.buffer);
 	
-	if (!color) return
+	if (!color) return false
 
     for (let i = 0; i < pixelArray.length; i += 4) {
         pixelArray[i] = parseInt(color.substring(1, 3), 16);
@@ -281,6 +280,8 @@ async function tint(image, color) {
 
 async function generateColorPaper(color) {
     let image = tint(`${penguinDir}/body.png`, color);
+	
+	if (!image) return false
 
     image = await sharp(image[0], image[1])
         .composite([
