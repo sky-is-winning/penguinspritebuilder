@@ -1,6 +1,6 @@
-import http from 'http';
-import fs from 'fs';
-import querystring from 'querystring';
+import http from "http";
+import fs from "fs";
+import querystring from "querystring";
 import buildAnimation from "../src/penguinbuilder.js";
 
 export default class WebServer {
@@ -65,39 +65,46 @@ export default class WebServer {
 
     start() {
         this.server.listen(3000);
-  
-        this.server.on('request', async (request, response) => {
-            if (request.url == '/') {
-                response.writeHead(200, { 'Content-Type': 'text/html' });
+
+        this.server.on("request", async (request, response) => {
+            if (request.url == "/") {
+                response.writeHead(200, { "Content-Type": "text/html" });
                 response.write(this.html);
                 response.end();
                 return;
             }
-            let formData = querystring.parse(request.url.split('?')[1]);
-            let string = Object.values(formData).filter((item) => item != '').join(',');
-            if (!string || string == '') {
-                response.writeHead(200, { 'Content-Type': 'text/html' });
+            let formData = querystring.parse(request.url.split("?")[1]);
+            let string = Object.values(formData)
+                .filter((item) => item != "")
+                .join(",");
+            if (!string || string == "") {
+                response.writeHead(200, { "Content-Type": "text/html" });
                 response.write(this.html);
                 response.end();
                 return;
             }
-			try {
-				let data = await buildAnimation({ items: string });
-				response.writeHead(200, { 'Content-Type': 'text/html' });
-				response.write(this.html)
-				let files = fs.readdirSync(`./output/${data}/`).filter((file) => file.endsWith('.gif'));
-				files.forEach((file) => {
-					let image = fs.readFileSync(`./output/${data}/${file}`)
-					response.write(`<img src="data:image/gif;base64,${image.toString('base64')}" style="width:10%;height:10%;">`);
-				});
-				response.end();
-			}
-			catch(err){
-				response.writeHead(200, { 'Content-Type': 'text/html' });
-				response.write(this.html)
-				response.write(error.name)
-				response.end()
-			}
+            try {
+                let data = await buildAnimation({ items: string });
+                response.writeHead(200, { "Content-Type": "text/html" });
+                response.write(this.html);
+                let files = fs
+                    .readdirSync(`./output/${data}/`)
+                    .filter((file) => file.endsWith(".gif"));
+                files.forEach((file) => {
+                    let image = fs.readFileSync(`./output/${data}/${file}`);
+                    response.write(
+                        `<img src="data:image/gif;base64,${image.toString(
+                            "base64"
+                        )}" style="width:10%;height:10%;">`
+                    );
+                });
+                response.end();
+            } catch (err) {
+                response.writeHead(200, { "Content-Type": "text/html" });
+                response.write(this.html);
+                response.write(error.name);
+                response.end();
+            }
         });
     }
 }
