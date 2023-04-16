@@ -265,6 +265,8 @@ async function tint(image, color) {
         .toBuffer({ resolveWithObject: true });
 
     const pixelArray = new Uint8ClampedArray(data.buffer);
+	
+	if (!color) return
 
     for (let i = 0; i < pixelArray.length; i += 4) {
         pixelArray[i] = parseInt(color.substring(1, 3), 16);
