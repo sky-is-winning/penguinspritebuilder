@@ -102,7 +102,7 @@ export default class WebServer {
             } catch (err) {
                 response.writeHead(200, { "Content-Type": "text/html" });
                 response.write(this.html);
-                response.write(error.name);
+                response.write(err.name);
                 response.end();
             }
         });
