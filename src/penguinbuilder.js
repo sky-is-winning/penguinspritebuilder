@@ -125,7 +125,7 @@ async function buildAnimation(options) {
             }
         }
     } catch (err) {
-        console.error(error);
+        console.error(err);
     }
 }
 
@@ -210,7 +210,7 @@ async function processFrame(frame, penguinModel, cacheString) {
                         }
                     });
             } catch (err) {
-                console.error(error);
+                console.error(err);
             }
         }
 
@@ -252,11 +252,11 @@ async function processFrame(frame, penguinModel, cacheString) {
                     return true;
                 });
             } catch (err) {
-                console.error(error);
+                console.error(err);
             }
         }
     } catch (err) {
-        console.error(error);
+        console.error(err);
     }
 }
 
@@ -281,7 +281,7 @@ async function unpack(item) {
         });
         return true;
     } catch (err) {
-        console.error(error);
+        console.error(err);
     }
 }
 
@@ -292,7 +292,7 @@ async function unpackSecretFrames(frame) {
             outputdir: `${extractedDir}/penguin/${frame}`,
         });
     } catch (err) {
-        console.error(error);
+        console.error(err);
     }
 }
 
@@ -316,7 +316,7 @@ async function tint(image, color) {
 
         return [pixelArray, { raw: { width, height, channels } }];
     } catch (err) {
-        console.error(error);
+        console.error(err);
     }
 }
 
@@ -342,7 +342,7 @@ async function generateColorPaper(color) {
             .toFile(`${penguinDir}/paper/${color}.webp`);
         return true;
     } catch (err) {
-        console.error(error);
+        console.error(err);
     }
 }
 
