@@ -81,15 +81,23 @@ export default class WebServer {
                 response.end();
                 return;
             }
-            let data = await buildAnimation({ items: string });
-            response.writeHead(200, { 'Content-Type': 'text/html' });
-            response.write(this.html)
-            let files = fs.readdirSync(`./output/${data}/`).filter((file) => file.endsWith('.gif'));
-            files.forEach((file) => {
-                let image = fs.readFileSync(`./output/${data}/${file}`)
-                response.write(`<img src="data:image/gif;base64,${image.toString('base64')}" style="width:10%;height:10%;">`);
-            });
-            response.end();
+			try {
+				let data = await buildAnimation({ items: string });
+				response.writeHead(200, { 'Content-Type': 'text/html' });
+				response.write(this.html)
+				let files = fs.readdirSync(`./output/${data}/`).filter((file) => file.endsWith('.gif'));
+				files.forEach((file) => {
+					let image = fs.readFileSync(`./output/${data}/${file}`)
+					response.write(`<img src="data:image/gif;base64,${image.toString('base64')}" style="width:10%;height:10%;">`);
+				});
+				response.end();
+			}
+			catch(err){
+				response.writeHead(200, { 'Content-Type': 'text/html' });
+				response.write(this.html)
+				response.write(error.name)
+				response.end()
+			}
         });
     }
 }
