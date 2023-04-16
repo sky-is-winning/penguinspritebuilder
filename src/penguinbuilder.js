@@ -13,7 +13,7 @@ const outputDir = "./output";
 const penguinDir = "./penguin";
 const extractedDir = "./extracted";
 
-if (!fs.existsSync(outputDir)) fs.mkdirSync(outputdir)
+if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir)
 if (!fs.existsSync(extractedDir)) fs.mkdirSync(extractedDir)
 
 const items = JSON.parse(fs.readFileSync("./crumbs/items.json"));
