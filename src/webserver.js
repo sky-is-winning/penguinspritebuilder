@@ -56,6 +56,7 @@ export default class WebServer {
                         if (data.type == "start") {
                             frames.push(data.frame)
                         } else if (data.type == "progress") {
+                            if (!fs.existsSync(data.file)) return;
                             let image = fs.readFileSync(data.file)
                             response.write(
                                 `<img src="data:image/gif;base64,${image.toString(
