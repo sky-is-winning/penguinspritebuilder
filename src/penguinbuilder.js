@@ -19,12 +19,12 @@ const items = JSON.parse(fs.readFileSync("./crumbs/items.json"));
 const secretFrames = JSON.parse(fs.readFileSync("./crumbs/secret_frames.json"));
 const colors = JSON.parse(fs.readFileSync("./crumbs/colors.json"));
 
-async function buildAnimation(options) {
+async function buildAnimation(options, sessionId, events) {
     try {
         let penguinModel = {
             photo: 0,
             pin: 0,
-            color: 1,
+            color: '#003366',
             feet: 0,
             body: 0,
             neck: 0,
@@ -45,7 +45,12 @@ async function buildAnimation(options) {
         }
 
         if (!fs.existsSync(`${penguinDir}/paper/${penguinModel.color}.webp`)) {
-            if (!(await generateColorPaper(penguinModel.color))) return;
+            if (!(await generateColorPaper(penguinModel.color))) {
+                events.emit(sessionId, {
+                    type: "error",
+                });
+                return;
+            }
         }
 
         let penguinArray = Object.values(penguinModel).filter(
@@ -54,13 +59,36 @@ async function buildAnimation(options) {
 
         let cacheString = penguinArray.join("_");
 
+        if (!cacheString || cacheString == "") {
+            events.emit(sessionId, {
+                type: "error",
+            });
+            return;
+        }
+
         if (fs.existsSync(`${outputDir}/${cacheString}`)) {
-            return cacheString;
+            fs.readdirSync(`${outputDir}/${cacheString}`).filter((file) => file.endsWith(".gif")).forEach((file) => {
+                events.emit(sessionId, {
+                    frame: file.split(".")[0],
+                    type: "start",
+                });
+
+                events.emit(sessionId, {
+                    file: `${outputDir}/${cacheString}/${file}`,
+                    frame: file.split(".")[0],
+                    type: "progress",
+                });
+            });
+            return;
         }
 
         fs.mkdirSync(`${outputDir}/${cacheString}`);
 
         // Paper
+        events.emit(sessionId, {
+            frame: 'paper',
+            type: "start",
+        });
 
         let bottomLayer = penguinArray.shift();
         sharp(
@@ -81,7 +109,12 @@ async function buildAnimation(options) {
                 })
             )
             .toFile(`${outputDir}/${cacheString}/paper.gif`, (err, info) => {
-                if (err) throw err;
+                if (err) console.error(err);
+                events.emit(sessionId, {
+                    file: `${outputDir}/${cacheString}/paper.gif`,
+                    frame: 'paper',
+                    type: "progress",
+                });
             });
 
         // Sprites
@@ -96,7 +129,7 @@ async function buildAnimation(options) {
                 let isSecret = false;
                 secretFrames[i].forEach((frame) => {
                     for (let i in frame) {
-                        if (penguinModel[i] && penguinModel[i] != frame[i]) {
+                        if (!penguinModel[i] || penguinModel[i] != frame[i]) {
                             return;
                         }
                     }
@@ -112,24 +145,20 @@ async function buildAnimation(options) {
             }
         }
 
-        let framesLeft = frames.length;
-
         for (let frame of frames) {
-            let complete = await processFrame(frame, penguinModel, cacheString);
-            if (complete) {
-                console.log(`Frame ${frame} complete`);
-                framesLeft--;
-            }
-            if (framesLeft == 0) {
-                return cacheString;
-            }
+            events.emit(sessionId, {
+                frame: frame,
+                type: "start",
+            });
+            await processFrame(frame, penguinModel, cacheString, sessionId, events);
         }
+
     } catch (err) {
         console.error(err);
     }
 }
 
-async function processFrame(frame, penguinModel, cacheString) {
+async function processFrame(frame, penguinModel, cacheString, sessionId, events) {
     try {
         delete penguinModel.pin;
         delete penguinModel.photo;
@@ -242,6 +271,11 @@ async function processFrame(frame, penguinModel, cacheString) {
                     );
 
                 stream.on("finish", () => {
+                    events.emit(sessionId, {
+                        file: `${outputDir}/${cacheString}/${frame}.gif`,
+                        frame: frame,
+                        type: "progress",
+                    });
                     for (let file of frameList) {
                         try {
                             fs.unlinkSync(
@@ -322,7 +356,7 @@ async function tint(image, color) {
 
 async function generateColorPaper(color) {
     try {
-        let image = tint(`${penguinDir}/body.png`, color);
+        let image = await tint(`${penguinDir}/body.png`, color);
 
         if (!image) return false;
 

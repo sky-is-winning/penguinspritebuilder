@@ -2,10 +2,13 @@ import http from "http";
 import fs from "fs";
 import querystring from "querystring";
 import buildAnimation from "../src/penguinbuilder.js";
+import { EventEmitter } from "events";
+import { randomBytes } from "crypto";
 
 export default class WebServer {
     constructor() {
         this.server = http.createServer();
+        this.events = new EventEmitter();
     }
 
     get html() {
@@ -13,7 +16,8 @@ export default class WebServer {
         <!DOCTYPE html>
 <html>
   <head>
-    <title>Input Form Example</title>
+    <title>Penguin Sprite Builder</title>
+    <link href="//db.onlinewebfonts.com/c/771545ad3c588eace8fa2bb99d2c4e59?family=Burbank+Small" rel="stylesheet" type="text/css"/>
   </head>
   <body>
     <h1>Enter Item Details</h1>
@@ -58,6 +62,21 @@ export default class WebServer {
             window.location.href = window.location.origin + window.location.pathname + "?" + searchParams.toString();
         });
     </script>
+    <style>
+    @import url(//db.onlinewebfonts.com/c/771545ad3c588eace8fa2bb99d2c4e59?family=Burbank+Small);
+
+    @font-face {font-family: "Burbank Small"; src: url("//db.onlinewebfonts.com/t/771545ad3c588eace8fa2bb99d2c4e59.eot"); src: url("//db.onlinewebfonts.com/t/771545ad3c588eace8fa2bb99d2c4e59.eot?#iefix") format("embedded-opentype"), url("//db.onlinewebfonts.com/t/771545ad3c588eace8fa2bb99d2c4e59.woff2") format("woff2"), url("//db.onlinewebfonts.com/t/771545ad3c588eace8fa2bb99d2c4e59.woff") format("woff"), url("//db.onlinewebfonts.com/t/771545ad3c588eace8fa2bb99d2c4e59.ttf") format("truetype"), url("//db.onlinewebfonts.com/t/771545ad3c588eace8fa2bb99d2c4e59.svg#Burbank Small") format("svg"); }
+
+    body {
+        text-align: center;
+        font-family: "Burbank Small";
+    }
+
+    form {
+        display: inline-block;
+    }
+    </style>
+    </br>
   </body>
 </html>
         `;
@@ -73,37 +92,62 @@ export default class WebServer {
                 response.end();
                 return;
             }
-            let formData = querystring.parse(request.url.split("?")[1]);
-            let string = Object.values(formData)
-                .filter((item) => item != "")
-                .join(",");
-            if (!string || string == "") {
-                response.writeHead(200, { "Content-Type": "text/html" });
-                response.write(this.html);
-                response.end();
-                return;
-            }
-            try {
-                let data = await buildAnimation({ items: string });
-                response.writeHead(200, { "Content-Type": "text/html" });
-                response.write(this.html);
-                let files = fs
-                    .readdirSync(`./output/${data}/`)
-                    .filter((file) => file.endsWith(".gif"));
-                files.forEach((file) => {
-                    let image = fs.readFileSync(`./output/${data}/${file}`);
-                    response.write(
-                        `<img src="data:image/gif;base64,${image.toString(
-                            "base64"
-                        )}" style="width:10%;height:10%;">`
-                    );
-                });
-                response.end();
-            } catch (err) {
-                response.writeHead(200, { "Content-Type": "text/html" });
-                response.write(this.html);
-                response.write(err.name);
-                response.end();
+            
+            if (request.url.startsWith("/?")) {
+                let formData = querystring.parse(request.url.split("?")[1]);
+
+                let string = Object.values(formData)
+                    .filter((item) => item != "")
+                    .join(",");
+                
+                if (!string || string == "") {
+                    response.writeHead(200, { "Content-Type": "text/html" });
+                    response.write(this.html);
+                    response.end();
+                    return;
+                }
+
+                try {
+                    let sessionId = randomBytes(16).toString("hex");
+
+                    response.writeHead(200, { "Content-Type": "text/html" });
+                    response.write(this.html);
+
+                    let frames = []
+                    let endSessionTimeout
+                    this.events.on(sessionId, (data) => {
+                        clearTimeout(endSessionTimeout);
+
+                        if (data.type == "start") {
+                            frames.push(data.frame)
+                        } else if (data.type == "progress") {
+                            let image = fs.readFileSync(data.file)
+                            response.write(
+                                `<img src="data:image/gif;base64,${image.toString(
+                                    "base64"
+                                )}" style="width:10%;height:10%;">`
+                            );
+                            frames = frames.filter((frame) => frame != data.frame)
+
+                            if (frames.length == 0) {
+                                endSessionTimeout = setTimeout(() => {
+                                    response.end();
+                                }, 1000);
+                            }
+                        } else if (data.type == "error") {
+                            response.write(`<h1>An error occured</h1>`);
+                            response.end();
+                        }
+                    });
+
+                    await buildAnimation({ items: string }, sessionId, this.events);
+
+                } catch (err) {
+                    response.writeHead(200, { "Content-Type": "text/html" });
+                    response.write(this.html);
+                    response.write("<h1>An error occured</h1>");
+                    response.end();
+                }
             }
         });
     }
