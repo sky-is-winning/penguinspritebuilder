@@ -11,75 +11,12 @@ export default class WebServer {
         this.events = new EventEmitter();
     }
 
-    get html() {
-        return `
-        <!DOCTYPE html>
-<html>
-  <head>
-    <title>Penguin Sprite Builder</title>
-    <link href="//db.onlinewebfonts.com/c/771545ad3c588eace8fa2bb99d2c4e59?family=Burbank+Small" rel="stylesheet" type="text/css"/>
-  </head>
-  <body>
-    <h1>Enter Item Details</h1>
-    <form>
-      <label for="background">Background:</label>
-      <input type="text" id="background" name="background"><br>
-
-      <label for="flag">Flag:</label>
-      <input type="text" id="flag" name="flag"><br>
-
-      <label for="color">Color:</label>
-      <input type="text" id="color" name="color"><br>
-
-      <label for="feet">Feet:</label>
-      <input type="text" id="feet" name="feet"><br>
-
-      <label for="body">Body:</label>
-      <input type="text" id="body" name="body"><br>
-
-      <label for="hand">Hand:</label>
-      <input type="text" id="hand" name="hand"><br>
-
-      <label for="neck">Neck:</label>
-      <input type="text" id="neck" name="neck"><br>
-
-      <label for="face">Face:</label>
-      <input type="text" id="face" name="face"><br>
-
-      <label for="head">Head:</label>
-      <input type="text" id="head" name="head"><br>
-
-      <input type="submit" value="Submit">
-    </form>
-    <script>
-        document.querySelector("form").addEventListener("submit", (event) => {
-            event.preventDefault();
-            const formData = new FormData(event.target);
-            const searchParams = new URLSearchParams();
-            for (const pair of formData) {
-                searchParams.append(pair[0], pair[1]);
-            }
-            window.location.href = window.location.origin + window.location.pathname + "?" + searchParams.toString();
-        });
-    </script>
-    <style>
-    @import url(//db.onlinewebfonts.com/c/771545ad3c588eace8fa2bb99d2c4e59?family=Burbank+Small);
-
-    @font-face {font-family: "Burbank Small"; src: url("//db.onlinewebfonts.com/t/771545ad3c588eace8fa2bb99d2c4e59.eot"); src: url("//db.onlinewebfonts.com/t/771545ad3c588eace8fa2bb99d2c4e59.eot?#iefix") format("embedded-opentype"), url("//db.onlinewebfonts.com/t/771545ad3c588eace8fa2bb99d2c4e59.woff2") format("woff2"), url("//db.onlinewebfonts.com/t/771545ad3c588eace8fa2bb99d2c4e59.woff") format("woff"), url("//db.onlinewebfonts.com/t/771545ad3c588eace8fa2bb99d2c4e59.ttf") format("truetype"), url("//db.onlinewebfonts.com/t/771545ad3c588eace8fa2bb99d2c4e59.svg#Burbank Small") format("svg"); }
-
-    body {
-        text-align: center;
-        font-family: "Burbank Small";
+    get indexhtml() {
+        return fs.readFileSync("./html/index.html").toString();
     }
 
-    form {
-        display: inline-block;
-    }
-    </style>
-    </br>
-  </body>
-</html>
-        `;
+    get html404() {
+        return fs.readFileSync("./html/404.html").toString();
     }
 
     start() {
@@ -88,12 +25,10 @@ export default class WebServer {
         this.server.on("request", async (request, response) => {
             if (request.url == "/") {
                 response.writeHead(200, { "Content-Type": "text/html" });
-                response.write(this.html);
+                response.write(this.indexhtml);
                 response.end();
                 return;
-            }
-            
-            if (request.url.startsWith("/?")) {
+            } else if (request.url.startsWith("/?")) {
                 let formData = querystring.parse(request.url.split("?")[1]);
 
                 let string = Object.values(formData)
@@ -102,7 +37,7 @@ export default class WebServer {
                 
                 if (!string || string == "") {
                     response.writeHead(200, { "Content-Type": "text/html" });
-                    response.write(this.html);
+                    response.write(this.indexhtml);
                     response.end();
                     return;
                 }
@@ -111,7 +46,7 @@ export default class WebServer {
                     let sessionId = randomBytes(16).toString("hex");
 
                     response.writeHead(200, { "Content-Type": "text/html" });
-                    response.write(this.html);
+                    response.write(this.indexhtml);
 
                     let frames = []
                     let endSessionTimeout
@@ -144,10 +79,14 @@ export default class WebServer {
 
                 } catch (err) {
                     response.writeHead(200, { "Content-Type": "text/html" });
-                    response.write(this.html);
+                    response.write(this.indexhtml);
                     response.write("<h1>An error occured</h1>");
                     response.end();
                 }
+            } else {
+                response.writeHead(404, { "Content-Type": "text/html" });
+                response.write(this.html404)
+                response.end();
             }
         });
     }
