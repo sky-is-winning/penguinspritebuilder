@@ -4,6 +4,7 @@ import querystring from "querystring";
 import buildAnimation from "../src/penguinbuilder.js";
 import { EventEmitter } from "events";
 import { randomBytes } from "crypto";
+import path from "path";
 
 export default class WebServer {
     constructor() {
