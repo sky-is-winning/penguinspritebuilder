@@ -110,8 +110,8 @@ export default class WebServer {
                     case ".jpg":
                         contentType = "image/jpg";
                         break;
-                    case ".wav":
-                        contentType = "audio/wav";
+                    case ".zip":
+                        contentType = "application/zip";
                         break;
                 }
 
