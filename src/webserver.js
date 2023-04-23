@@ -118,7 +118,7 @@ export default class WebServer {
                     if (error) {
                         if (error.code == "ENOENT") {
                             fs.readFile(
-                                "./404.html",
+                                "./html/404.html",
                                 function (error, content) {
                                     response.writeHead(200, {
                                         "Content-Type": contentType,
